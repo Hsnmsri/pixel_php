@@ -128,4 +128,80 @@ class Pixel
 
         return true;
     }
+
+    /**
+     * Compress and lower the file size of a JPEG or PNG image without lowering the quality and save the result to a new file.
+     *
+     * @param string $imagePath        Path to the original image.
+     * @param string $compressedImagePath Path to save the compressed image.
+     * @param int    $compressionLevel Image compression level (0-9) for PNG format.
+     * @param bool   $createPathIfNotExists Whether to create the directory if it doesn't exist (default is false).
+     *
+     * @return bool Returns true on successful compression.
+     * @throws \ErrorException If an error occurs during the process.
+     */
+    public static function compressImage(string $imagePath, string $compressedImagePath, int $compressionLevel = 9, bool $createPathIfNotExists = false): bool
+    {
+        // Validate compression level for PNG
+        if (strtolower(pathinfo($imagePath, PATHINFO_EXTENSION)) == 'png' && ($compressionLevel < 0 || $compressionLevel > 9)) {
+            throw new \ErrorException('Invalid compression level. The compression parameter should be between 0 and 9 for PNG.');
+        }
+
+        try {
+            // Check image path type
+            if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                $originalImage = imagecreatefromstring(file_get_contents($imagePath));
+            } else {
+                if (!file_exists($imagePath)) {
+                    throw new \ErrorException('Original image file not found.');
+                }
+
+                $imageExtension = strtolower(pathinfo($imagePath, PATHINFO_EXTENSION));
+                switch ($imageExtension) {
+                    case 'jpg':
+                    case 'jpeg':
+                        $originalImage = imagecreatefromjpeg($imagePath);
+                        break;
+                    case 'png':
+                        $originalImage = imagecreatefrompng($imagePath);
+                        break;
+                    default:
+                        throw new \ErrorException('Unsupported image format.');
+                }
+            }
+
+            if (!$originalImage) {
+                throw new \ErrorException('Failed to create image from the original file or URL.');
+            }
+
+            // Check and create the compressed image directory if needed
+            $compressedImageDirectory = dirname($compressedImagePath);
+            if (!is_dir($compressedImageDirectory) && $createPathIfNotExists) {
+                mkdir($compressedImageDirectory, 0777, true);
+            }
+
+            // Save the compressed image based on its type
+            switch (strtolower(pathinfo($compressedImagePath, PATHINFO_EXTENSION))) {
+                case 'jpg':
+                case 'jpeg':
+                    // For JPEG, use quality 100 for lossless compression
+                    imagejpeg($originalImage, $compressedImagePath, 100);
+                    break;
+                case 'png':
+                    // For PNG, use the specified compression level (0-9) for lossless compression
+                    imagepng($originalImage, $compressedImagePath, $compressionLevel);
+                    break;
+                default:
+                    throw new \ErrorException('Unsupported image format for saving the compressed image.');
+            }
+
+            // Free up memory by destroying the image resources
+            imagedestroy($originalImage);
+        } catch (\ErrorException $error) {
+            throw $error;
+        }
+
+        return true;
+    }
+
 }
