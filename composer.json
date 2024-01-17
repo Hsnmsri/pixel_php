@@ -1,0 +1,11 @@
+{
+    "name": "hsnmsri/pixel",
+    "description": "resize, compress and other image processing.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Pixel\\": "src/pixel.php"
+        }
+    },
+    "require": {}
+}
