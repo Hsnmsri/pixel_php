@@ -55,4 +55,77 @@ class Pixel
 
         return true;
     }
+
+    /**
+     * Change the quality of a JPEG or PNG image and save the result to a new file.
+     *
+     * @param string $imagePath        Path to the original image.
+     * @param string $newImagePath     Path to save the new image.
+     * @param int    $quality          Image quality (0-100) for JPEG format, compression level (0-9) for PNG format.
+     * @param bool   $createPathIfNotExists Whether to create the directory if it doesn't exist (default is false).
+     *
+     * @return bool Returns true on successful quality change.
+     * @throws \ErrorException If an error occurs during the process.
+     */
+    public static function changeQuality(string $imagePath, string $newImagePath, int $quality, bool $createPathIfNotExists = false): bool
+    {
+        // Validate quality level
+        if (($quality < 0 || $quality > 100) || (pathinfo($imagePath, PATHINFO_EXTENSION) == 'png' && ($quality < 0 || $quality > 9))) {
+            throw new \ErrorException('Invalid quality level. The quality parameter should be between 0 and 100 for JPEG, and between 0 and 9 for PNG.');
+        }
+
+        try {
+            // Check image path type
+            if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                $originalImage = imagecreatefromstring(file_get_contents($imagePath));
+            } else {
+                if (!file_exists($imagePath)) {
+                    throw new \ErrorException('Original image file not found.');
+                }
+
+                $imageExtension = strtolower(pathinfo($imagePath, PATHINFO_EXTENSION));
+                switch ($imageExtension) {
+                    case 'jpg':
+                    case 'jpeg':
+                        $originalImage = imagecreatefromjpeg($imagePath);
+                        break;
+                    case 'png':
+                        $originalImage = imagecreatefrompng($imagePath);
+                        break;
+                    default:
+                        throw new \ErrorException('Unsupported image format.');
+                }
+            }
+
+            if (!$originalImage) {
+                throw new \ErrorException('Failed to create image from the original file or URL.');
+            }
+
+            // Check and create the new image directory if needed
+            $newImageDirectory = dirname($newImagePath);
+            if (!is_dir($newImageDirectory) && $createPathIfNotExists) {
+                mkdir($newImageDirectory, 0777, true);
+            }
+
+            // Save the new image based on its type
+            switch (strtolower(pathinfo($newImagePath, PATHINFO_EXTENSION))) {
+                case 'jpg':
+                case 'jpeg':
+                    imagejpeg($originalImage, $newImagePath, $quality);
+                    break;
+                case 'png':
+                    imagepng($originalImage, $newImagePath, $quality);
+                    break;
+                default:
+                    throw new \ErrorException('Unsupported image format for saving the new image.');
+            }
+
+            // Free up memory by destroying the image resources
+            imagedestroy($originalImage);
+        } catch (\ErrorException $error) {
+            throw $error;
+        }
+
+        return true;
+    }
 }

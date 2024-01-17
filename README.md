@@ -22,3 +22,16 @@ Pixel::resizeImage(imagePath,resizedImagePath,newWidth, newHeight, createPathIfN
 - Support for both local file paths and URLs.
 - Option to create the destination directory if it doesn't exist.
 - Error handling with detailed exceptions.
+
+## Change image quality tool
+
+```php
+Pixel::changeQuality(imagePath,resizedImagePath,quality, createPathIfNotExists = false)
+```
+
+### Features
+
+- Change the quality of JPEG and PNG images.
+- Support for both local file paths and URLs.
+- Option to create the destination directory if it doesn't exist.
+- Error handling with detailed exceptions.
