@@ -7,5 +7,7 @@
             "Pixel\\": "src/pixel.php"
         }
     },
-    "require": {}
+    "require": {},
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
